@@ -7,6 +7,7 @@ import styled from 'styled-components';
 interface PlaylistCardProps {
   playlist: SpotifyPlaylist;
   onClick?: (playlistId: string) => void;
+  selected?: boolean;
 }
 
 const Card = styled.div`

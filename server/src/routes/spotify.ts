@@ -1,3 +1,4 @@
+import { getUserProfile } from './../controllers/spotify';
 // server/src/routes/spotify.ts
 
 import express from 'express';

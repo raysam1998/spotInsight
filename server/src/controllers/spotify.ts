@@ -61,12 +61,15 @@ export const getUserPlaylists = async (req: Request, res: Response) => {
 };
 
 // Get tracks from a playlist with detailed audio features
+// Get tracks from a playlist with detailed audio features
 export const getPlaylistTracks = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const limit = parseInt(req.query.limit as string) || 100;
     const offset = parseInt(req.query.offset as string) || 0;
-    const includeAudioFeatures = req.query.includeAudioFeatures === 'true';
+    
+    // Always set this to false to avoid the audio features API call
+    const includeAudioFeatures = false;
     
     const spotifyApi = getSpotifyApiWithTokens(req);
     const data = await spotifyApi.getPlaylistTracks(id, { 
@@ -75,53 +78,8 @@ export const getPlaylistTracks = async (req: Request, res: Response) => {
       fields: 'items(added_at,track(id,name,artists,album,duration_ms,explicit,popularity,preview_url)),total,limit,offset,href,next,previous'
     });
     
-    // Get audio features for all tracks if requested
-    if (includeAudioFeatures) {
-      // Extract track IDs, filtering out any null tracks
-      const trackIds = data.body.items
-        .filter(item => item.track && item.track.id)
-        .map(item => item.track.id);
-      
-      if (trackIds.length > 0) {
-        try {
-          // Split into batches of 100 (Spotify API limit)
-          const audioFeaturesBatches = [];
-          for (let i = 0; i < trackIds.length; i += 100) {
-            const batchIds = trackIds.slice(i, i + 100);
-            const batchFeatures = await spotifyApi.getAudioFeaturesForTracks(batchIds);
-            audioFeaturesBatches.push(...batchFeatures.body.audio_features);
-          }
-          
-          // Create a map of track ID to audio features
-          const audioFeaturesMap = audioFeaturesBatches.reduce((map, features) => {
-            if (features && features.id) {
-              map[features.id] = features;
-            }
-            return map;
-          }, {});
-          
-          // Merge audio features with track data
-          const tracksWithFeatures = data.body.items.map(item => {
-            if (item.track && item.track.id && audioFeaturesMap[item.track.id]) {
-              return {
-                ...item,
-                audio_features: audioFeaturesMap[item.track.id]
-              };
-            }
-            return item;
-          });
-          
-          return res.json({
-            ...data.body,
-            items: tracksWithFeatures
-          });
-        } catch (featuresError) {
-          console.error('Error fetching audio features:', featuresError);
-          // Continue without audio features if there's an error
-        }
-      }
-    }
-    
+    // Since includeAudioFeatures is false, we'll skip the audio features request
+    // and just return the track data
     res.json(data.body);
   } catch (error) {
     console.error('Error fetching playlist tracks:', error);
@@ -231,5 +189,111 @@ export const getTopTracks = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching top tracks:', error);
     res.status(500).json({ error: 'Failed to fetch top tracks' });
+  }
+};
+
+
+export const addTracksToPlaylist = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { uris } = req.body;
+    
+    if (!uris || !Array.isArray(uris)) {
+      return res.status(400).json({ error: 'Invalid track URIs provided' });
+    }
+    
+    const spotifyApi = getSpotifyApiWithTokens(req);
+    
+    // Add tracks to the playlist
+    // Spotify has a limit of 100 tracks per request, so handle in batches if needed
+    const result = await spotifyApi.addTracksToPlaylist(id, uris);
+    
+    res.status(201).json(result.body);
+  } catch (error) {
+    console.error('Error adding tracks to playlist:', error);
+    res.status(500).json({ error: 'Failed to add tracks to playlist' });
+  }
+};
+
+// Remove tracks from a playlist
+export const removeTracksFromPlaylist = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { uris } = req.body;
+    
+    if (!uris || !Array.isArray(uris)) {
+      return res.status(400).json({ error: 'Invalid track URIs provided' });
+    }
+    
+    const spotifyApi = getSpotifyApiWithTokens(req);
+    
+    // Format tracks for removal
+    const tracks = uris.map(uri => ({ uri }));
+    
+    // Remove tracks from the playlist
+    const result = await spotifyApi.removeTracksFromPlaylist(id, tracks);
+    
+    res.json(result.body);
+  } catch (error) {
+    console.error('Error removing tracks from playlist:', error);
+    res.status(500).json({ error: 'Failed to remove tracks from playlist' });
+  }
+};
+
+// Upload a custom cover image for a playlist
+export const uploadPlaylistCoverImage = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { image } = req.body;
+    
+    if (!image || typeof image !== 'string') {
+      return res.status(400).json({ error: 'Valid Base64 encoded image is required' });
+    }
+    
+    const spotifyApi = getSpotifyApiWithTokens(req);
+    
+    // Upload the image to the playlist
+    await spotifyApi.uploadCustomPlaylistCoverImage(id, image);
+    
+    res.status(202).json({ success: true });
+  } catch (error) {
+    console.error('Error uploading playlist cover image:', error);
+    res.status(500).json({ error: 'Failed to upload playlist cover image' });
+  }
+};
+
+// Get information about an artist
+export const getArtist = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const spotifyApi = getSpotifyApiWithTokens(req);
+    const data = await spotifyApi.getArtist(id);
+    
+    res.json(data.body);
+  } catch (error) {
+    console.error('Error fetching artist:', error);
+    res.status(500).json({ error: 'Failed to fetch artist information' });
+  }
+};
+
+// Search Spotify for tracks, artists, playlists, etc.
+export const searchSpotify = async (req: Request, res: Response) => {
+  try {
+    const query = req.query.q as string;
+    const type = req.query.type as string || 'track,artist,playlist';
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const spotifyApi = getSpotifyApiWithTokens(req);
+    const data = await spotifyApi.search(query, type.split(','), { limit });
+    
+    res.json(data.body);
+  } catch (error) {
+    console.error('Error searching Spotify:', error);
+    res.status(500).json({ error: 'Failed to search Spotify' });
   }
 };

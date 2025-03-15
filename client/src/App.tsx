@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Callback from './pages/Callback';
 import { AuthProvider } from 'contexts/AuthContext';
 import PlaylistDetail from 'pages/playlistDetail';
+import PlaylistConverter from 'pages/PlaylistConverter';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/callback" element={<Callback />} />
         <Route path="/playlist/:playlistId" element={<PlaylistDetail />} />
+        <Route path="/converter" element={<PlaylistConverter />} />
       </Routes>
     </Router>
     </AuthProvider>

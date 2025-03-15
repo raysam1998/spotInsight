@@ -30,12 +30,49 @@ const DashboardHeader = styled.header`
   }
 `;
 
+const HeaderButtons = styled.div`
+  display: flex;
+  gap: 10px;
+
+  @media (max-width: 768px) {
+    margin-top: 15px;
+  }
+`;
+
+const ActionButton = styled.button`
+  background-color: #1DB954;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover {
+    background-color: #19a54a;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+`;
+
 const LogoutButton = styled.button`
   background-color: #f44336;
   color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
   
   &:hover {
     background-color: #e53935;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
 `;
 
@@ -153,11 +190,20 @@ const Dashboard: React.FC = () => {
     navigate(`/playlist/${playlistId}`);
   };
 
+  const goToConverter = () => {
+    navigate('/converter');
+  };
+
   return (
     <DashboardContainer>
       <DashboardHeader>
         <h1>Welcome to SpotInsight, {user.display_name}!</h1>
-        <LogoutButton onClick={logout}>Logout</LogoutButton>
+        <HeaderButtons>
+          <ActionButton onClick={goToConverter}>
+            <span>Convert Playlists</span>
+          </ActionButton>
+          <LogoutButton onClick={logout}>Logout</LogoutButton>
+        </HeaderButtons>
       </DashboardHeader>
 
       <UserProfile>

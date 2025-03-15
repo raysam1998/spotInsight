@@ -179,6 +179,69 @@ class SpotifyService {
       throw error;
     }
   }
+  
+  // Add new methods for playlist manipulation
+  
+  async addTracksToPlaylist(playlistId: string, trackUris: string[]): Promise<any> {
+    try {
+      const response = await this.api.post(`/api/spotify/playlists/${playlistId}/tracks`, {
+        uris: trackUris
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to add tracks to playlist:', error);
+      throw error;
+    }
+  }
+  
+  async removeTracksFromPlaylist(playlistId: string, trackUris: string[]): Promise<any> {
+    try {
+      const response = await this.api.delete(`/api/spotify/playlists/${playlistId}/tracks`, {
+        data: { uris: trackUris }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to remove tracks from playlist:', error);
+      throw error;
+    }
+  }
+  
+  async uploadPlaylistCoverImage(playlistId: string, imageBase64: string): Promise<any> {
+    try {
+      // Make sure the Base64 string doesn't include the data:image/jpeg;base64, prefix
+      const cleanBase64 = imageBase64.includes('base64,')
+        ? imageBase64.split('base64,')[1]
+        : imageBase64;
+        
+      const response = await this.api.put(`/api/spotify/playlists/${playlistId}/images`, {
+        image: cleanBase64
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to upload playlist cover image:', error);
+      throw error;
+    }
+  }
+  
+  async getArtist(artistId: string): Promise<any> {
+    try {
+      const response = await this.api.get(`/api/spotify/artists/${artistId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get artist ${artistId}:`, error);
+      throw error;
+    }
+  }
+  
+  async searchSpotify(query: string, type: string = 'track,artist,playlist', limit = 10): Promise<any> {
+    try {
+      const response = await this.api.get(`/api/spotify/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to search Spotify:', error);
+      throw error;
+    }
+  }
 }
 
 export default new SpotifyService();

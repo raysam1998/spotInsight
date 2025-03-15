@@ -17,7 +17,7 @@ export const getAuthUrl = (req: Request, res: Response) => {
       'playlist-modify-public',
       'playlist-modify-private',
       'user-top-read',
-      'user-read-recently-played'
+      'user-read-recently-played',
     ];
     
     const state = Math.random().toString(36).substring(2, 15);
