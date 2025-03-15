@@ -1,10 +1,139 @@
+// client/src/pages/Dashboard.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Make sure path is correct
+import { useAuth } from '../contexts/AuthContext';
+import PlaylistsSection from '../components/PlaylistsSection';
+import styled from 'styled-components';
+
+const DashboardContainer = styled.div`
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const DashboardHeader = styled.header`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeaea;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    h1 {
+      margin-bottom: 15px;
+    }
+  }
+`;
+
+const LogoutButton = styled.button`
+  background-color: #f44336;
+  color: white;
+  
+  &:hover {
+    background-color: #e53935;
+  }
+`;
+
+const UserProfile = styled.div`
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+`;
+
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: center;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+  }
+`;
+
+const ProfileImage = styled.div`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 20px;
+  background-color: #1DB954;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  @media (max-width: 768px) {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+`;
+
+const ProfileInfo = styled.div`
+  h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #191414;
+  }
+  
+  p {
+    margin: 5px 0;
+    color: #666;
+  }
+`;
+
+const DashboardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const Section = styled.div`
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  
+  h3 {
+    margin-top: 0;
+    color: #191414;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 10px;
+  }
+`;
+
+const PlaceholderMessage = styled.p`
+  color: #888;
+  font-style: italic;
+`;
+
+const LoadingMessage = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #666;
+`;
 
 const Dashboard: React.FC = () => {
   const { isAuthenticated, user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   
   useEffect(() => {
     // Redirect to login if not authenticated and not loading
@@ -14,58 +143,68 @@ const Dashboard: React.FC = () => {
   }, [isAuthenticated, isLoading, navigate]);
 
   if (isLoading) {
-    return <div className='loading'>Loading your Spotify data...</div>;
+    return <LoadingMessage>Loading your Spotify data...</LoadingMessage>;
   }
   
   if (!user) {
     return <div>No user data available</div>;
   }
+  
+  const handlePlaylistClick = (playlistId: string) => {
+    setSelectedPlaylistId(playlistId);
+    // For now, we'll just log the selection, but this could open a modal or navigate to a details page
+    console.log(`Selected playlist: ${playlistId}`);
+  };
 
   return (
-    <div className="dashboard">
-      <header className='dashboard-header'>
-          <h1>Welcome to SpotInsight, {user.display_name}!</h1>
-          <button onClick={logout} className='logout-button'>Logout</button>
-      </header>
+    <DashboardContainer>
+      <DashboardHeader>
+        <h1>Welcome to SpotInsight, {user.display_name}!</h1>
+        <LogoutButton onClick={logout}>Logout</LogoutButton>
+      </DashboardHeader>
 
-      <div className="user-profile">
-        <div className="profile-header">
-          <div className="profile-image">
+      <UserProfile>
+        <ProfileHeader>
+          <ProfileImage>
             {user.images && user.images.length > 0 ? (
               <img src={user.images[0].url} alt={user.display_name} />
             ) : (
-              <div className="profile-image-placeholder">
-                {user.display_name.charAt(0).toUpperCase()}
-              </div>
+              user.display_name.charAt(0).toUpperCase()
             )}
-          </div>
+          </ProfileImage>
           
-          <div className="profile-info">
+          <ProfileInfo>
             <h2>{user.display_name}</h2>
             <p>{user.email}</p>
             <p>Country: {user.country}</p>
             <p>Account Type: {user.product}</p>
-          </div>
-        </div>
-      </div>
+          </ProfileInfo>
+        </ProfileHeader>
+      </UserProfile>
       
-      <div className="dashboard-content">
-        <div className="section">
-          <h3>Your Playlists</h3>
-          <p className="placeholder-message">Playlist data will be loaded here</p>
-        </div>
+      <DashboardContent>
+        {/* Playlists Section */}
+        <Section>
+          <PlaylistsSection 
+            limit={8}
+            showViewAll={true}
+            onPlaylistClick={handlePlaylistClick}
+          />
+        </Section>
         
-        <div className="section">
+        {/* Recent Activity Section */}
+        <Section>
           <h3>Recent Listening Activity</h3>
-          <p className="placeholder-message">Your recent activity will appear here</p>
-        </div>
+          <PlaceholderMessage>Your recent activity will appear here</PlaceholderMessage>
+        </Section>
         
-        <div className="section">
+        {/* Top Artists Section */}
+        <Section>
           <h3>Top Artists</h3>
-          <p className="placeholder-message">Your top artists will be displayed here</p>
-        </div>
-      </div>
-    </div>
+          <PlaceholderMessage>Your top artists will be displayed here</PlaceholderMessage>
+        </Section>
+      </DashboardContent>
+    </DashboardContainer>
   );
 };
 
