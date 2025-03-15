@@ -1,9 +1,9 @@
 // client/src/components/PlaylistsSection.tsx
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import spotifyService, { SpotifyPlaylist } from '../services/spotifyService';
-import { usePlaylists } from '../hooks/useSpotify';
 import PlaylistCard from './PlaylistCard';
 
 const SectionContainer = styled.div`
@@ -90,6 +90,7 @@ const PlaylistsSection: React.FC<PlaylistsSectionProps> = ({
   showViewAll = true,
   onPlaylistClick 
 }) => {
+  const navigate = useNavigate();
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,9 +136,15 @@ const PlaylistsSection: React.FC<PlaylistsSectionProps> = ({
     if (onPlaylistClick) {
       onPlaylistClick(playlistId);
     } else {
-      // Handle default navigation or details modal
-      console.log(`Playlist clicked: ${playlistId}`);
+      // Navigate to playlist detail page
+      navigate(`/playlist/${playlistId}`);
     }
+  };
+  
+  const handleViewAll = () => {
+    // For now, just load all playlists
+    // In the future, this could navigate to a dedicated playlists page
+    loadPlaylists(true);
   };
   
   return (
@@ -145,7 +152,7 @@ const PlaylistsSection: React.FC<PlaylistsSectionProps> = ({
       <SectionHeader>
         <SectionTitle>Your Playlists</SectionTitle>
         {showViewAll && playlists.length > 0 && (
-          <ViewAllButton>View All ({total})</ViewAllButton>
+          <ViewAllButton onClick={handleViewAll}>View All ({total})</ViewAllButton>
         )}
       </SectionHeader>
       

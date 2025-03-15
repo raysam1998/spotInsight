@@ -19,6 +19,8 @@ export interface SpotifyAlbum {
   id: string;
   name: string;
   images: SpotifyImage[];
+  release_date?: string;
+  release_date_precision?: string;
 }
 
 export interface SpotifyTrack {
@@ -29,11 +31,30 @@ export interface SpotifyTrack {
   artists: SpotifyArtist[];
   album: SpotifyAlbum;
   preview_url: string | null;
+  explicit?: boolean;
+  popularity?: number;
+}
+
+export interface AudioFeatures {
+  danceability: number;
+  energy: number;
+  key: number;
+  loudness: number;
+  mode: number;
+  speechiness: number;
+  acousticness: number;
+  instrumentalness: number;
+  liveness: number;
+  valence: number;
+  tempo: number;
+  duration_ms: number;
+  time_signature: number;
 }
 
 export interface PlaylistTrackItem {
   added_at: string;
   track: SpotifyTrack;
+  audio_features?: AudioFeatures;
 }
 
 export interface SpotifyPlaylist {
@@ -53,7 +74,7 @@ export interface SpotifyPlaylist {
     preview?: PlaylistTrackItem[];
   };
   uri: string;
-  followers: {
+  followers?: {
     total: number;
   };
 }

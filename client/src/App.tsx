@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Callback from './pages/Callback';
 import { AuthProvider } from 'contexts/AuthContext';
+import PlaylistDetail from 'pages/playlistDetail';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/callback" element={<Callback />} />
+        <Route path="/playlist/:playlistId" element={<PlaylistDetail />} />
       </Routes>
     </Router>
     </AuthProvider>

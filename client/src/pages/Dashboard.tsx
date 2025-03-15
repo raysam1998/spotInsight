@@ -133,7 +133,6 @@ const LoadingMessage = styled.div`
 const Dashboard: React.FC = () => {
   const { isAuthenticated, user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   
   useEffect(() => {
     // Redirect to login if not authenticated and not loading
@@ -151,9 +150,7 @@ const Dashboard: React.FC = () => {
   }
   
   const handlePlaylistClick = (playlistId: string) => {
-    setSelectedPlaylistId(playlistId);
-    // For now, we'll just log the selection, but this could open a modal or navigate to a details page
-    console.log(`Selected playlist: ${playlistId}`);
+    navigate(`/playlist/${playlistId}`);
   };
 
   return (

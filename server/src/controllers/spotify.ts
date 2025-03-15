@@ -66,34 +66,59 @@ export const getPlaylistTracks = async (req: Request, res: Response) => {
     const { id } = req.params;
     const limit = parseInt(req.query.limit as string) || 100;
     const offset = parseInt(req.query.offset as string) || 0;
+    const includeAudioFeatures = req.query.includeAudioFeatures === 'true';
     
     const spotifyApi = getSpotifyApiWithTokens(req);
-    const data = await spotifyApi.getPlaylistTracks(id, { limit, offset });
+    const data = await spotifyApi.getPlaylistTracks(id, { 
+      limit, 
+      offset,
+      fields: 'items(added_at,track(id,name,artists,album,duration_ms,explicit,popularity,preview_url)),total,limit,offset,href,next,previous'
+    });
     
-    // Get audio features for all tracks (to enable future analytics)
-    if (req.query.includeAudioFeatures === 'true') {
+    // Get audio features for all tracks if requested
+    if (includeAudioFeatures) {
+      // Extract track IDs, filtering out any null tracks
       const trackIds = data.body.items
-        .filter(item => item.track)
+        .filter(item => item.track && item.track.id)
         .map(item => item.track.id);
       
       if (trackIds.length > 0) {
-        const audioFeatures = await spotifyApi.getAudioFeaturesForTracks(trackIds);
-        
-        // Merge audio features with track data
-        const tracksWithFeatures = data.body.items.map((item, index) => {
-          if (item.track && index < audioFeatures.body.audio_features.length) {
-            return {
-              ...item,
-              audio_features: audioFeatures.body.audio_features[index]
-            };
+        try {
+          // Split into batches of 100 (Spotify API limit)
+          const audioFeaturesBatches = [];
+          for (let i = 0; i < trackIds.length; i += 100) {
+            const batchIds = trackIds.slice(i, i + 100);
+            const batchFeatures = await spotifyApi.getAudioFeaturesForTracks(batchIds);
+            audioFeaturesBatches.push(...batchFeatures.body.audio_features);
           }
-          return item;
-        });
-        
-        return res.json({
-          ...data.body,
-          items: tracksWithFeatures
-        });
+          
+          // Create a map of track ID to audio features
+          const audioFeaturesMap = audioFeaturesBatches.reduce((map, features) => {
+            if (features && features.id) {
+              map[features.id] = features;
+            }
+            return map;
+          }, {});
+          
+          // Merge audio features with track data
+          const tracksWithFeatures = data.body.items.map(item => {
+            if (item.track && item.track.id && audioFeaturesMap[item.track.id]) {
+              return {
+                ...item,
+                audio_features: audioFeaturesMap[item.track.id]
+              };
+            }
+            return item;
+          });
+          
+          return res.json({
+            ...data.body,
+            items: tracksWithFeatures
+          });
+        } catch (featuresError) {
+          console.error('Error fetching audio features:', featuresError);
+          // Continue without audio features if there's an error
+        }
       }
     }
     
