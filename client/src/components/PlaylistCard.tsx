@@ -10,13 +10,14 @@ interface PlaylistCardProps {
   selected?: boolean;
 }
 
-const Card = styled.div`
-  background-color: white;
+const Card = styled.div<{ isSelected?: boolean }>`
+  background-color: ${props => props.isSelected ? '#f0f9f1' : 'white'};
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  border: ${props => props.isSelected ? '2px solid #1DB954' : 'none'};
   
   &:hover {
     transform: translateY(-5px);
@@ -82,7 +83,7 @@ const TrackItem = styled.div`
   text-overflow: ellipsis;
 `;
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onClick }) => {
+const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onClick, selected }) => {
   const handleClick = () => {
     if (onClick) {
       onClick(playlist.id);
@@ -90,7 +91,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onClick }) => {
   };
 
   return (
-    <Card onClick={handleClick}>
+    <Card onClick={handleClick} isSelected={selected}>
       <PlaylistImage hasImage={playlist.images && playlist.images.length > 0}>
         {playlist.images && playlist.images.length > 0 ? (
           <img src={playlist.images[0].url} alt={playlist.name} />

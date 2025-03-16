@@ -3,7 +3,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { SpotifyPlaylist } from '../../services/spotifyService';
-import PlaylistCard from 'components/PlaylistCard';
+import PlaylistCard from '../PlaylistCard';
 
 interface PlaylistSelectionStepProps {
   playlists: SpotifyPlaylist[];
@@ -69,6 +69,11 @@ const PlaylistSelectionStep: React.FC<PlaylistSelectionStepProps> = ({
   onPlaylistSelect,
   onLoadMore
 }) => {
+  // Function to check if a playlist is selected
+  const isPlaylistSelected = (playlist: SpotifyPlaylist) => {
+    return selectedPlaylists.some(p => p.id === playlist.id);
+  };
+
   if (isLoading && playlists.length === 0) {
     return <LoadingMessage>Loading your playlists...</LoadingMessage>;
   }
@@ -84,20 +89,14 @@ const PlaylistSelectionStep: React.FC<PlaylistSelectionStepProps> = ({
   return (
     <>
       <PlaylistGrid>
-        {playlists.map(playlist => {
-          const isSelected = isMultiSelect
-            ? selectedPlaylists.some(p => p.id === playlist.id)
-            : selectedPlaylists.length === 1 && selectedPlaylists[0].id === playlist.id;
-            
-          return (
-            <PlaylistCard
-              key={playlist.id}
-              playlist={playlist}
-              selected={isSelected}
-              onClick={() => onPlaylistSelect(playlist)}
-            />
-          );
-        })}
+        {playlists.map(playlist => (
+          <PlaylistCard
+            key={playlist.id}
+            playlist={playlist}
+            selected={isPlaylistSelected(playlist)}
+            onClick={() => onPlaylistSelect(playlist)}
+          />
+        ))}
       </PlaylistGrid>
       
       {hasMore && (

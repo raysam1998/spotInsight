@@ -1,20 +1,23 @@
 // client/src/pages/PlaylistConverter.tsx
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { useAuth } from '../contexts/AuthContext';
-import spotifyService, { SpotifyPlaylist, PlaylistTrackItem } from '../services/spotifyService';
-import playlistConverterService, { 
-  FilterOptions, 
-  PlaylistCreationOptions
-} from '../services/playlistConverterService';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { useAuth } from "../contexts/AuthContext";
+import spotifyService, {
+  SpotifyPlaylist,
+  PlaylistTrackItem,
+} from "../services/spotifyService";
+import playlistConverterService, {
+  FilterOptions,
+  PlaylistCreationOptions,
+} from "../services/playlistConverterService";
 
 // Import components
-import PlaylistSelectionStep from '../components/playlist-converter/PlaylistSelectionStep';
-import FilterCheckboxGroup from '../components/playlist-converter/FilterCheckBoxGroup';
-import PlaylistCreationForm from '../components/playlist-converter/PlaylistCreationForm';
-import TrackFilters from 'components/playlist-converter/TrackFilters';
+import PlaylistSelectionStep from "../components/playlist-converter/PlaylistSelectionStep";
+import FilterCheckboxGroup from "../components/playlist-converter/FilterCheckBoxGroup";
+import PlaylistCreationForm from "../components/playlist-converter/PlaylistCreationForm";
+import TrackFilters from "components/playlist-converter/TrackFilters";
 
 // Styled components
 const ConverterContainer = styled.div`
@@ -37,11 +40,11 @@ const BackButton = styled.button`
   cursor: pointer;
   padding: 0;
   margin-bottom: 15px;
-  
+
   &:hover {
-    color: #1DB954;
+    color: #1db954;
   }
-  
+
   svg {
     margin-right: 5px;
   }
@@ -85,7 +88,7 @@ const StepTitle = styled.h2`
 `;
 
 const StepNumber = styled.div`
-  background-color: #1DB954;
+  background-color: #1db954;
   color: white;
   width: 30px;
   height: 30px;
@@ -98,11 +101,11 @@ const StepNumber = styled.div`
 
 const ModeSelector = styled.div`
   margin-top: 10px;
-  
+
   label {
     margin-right: 20px;
     cursor: pointer;
-    
+
     input {
       margin-right: 8px;
     }
@@ -123,7 +126,7 @@ const SuccessMessage = styled.div`
   padding: 10px;
   border-radius: 4px;
   margin-bottom: 20px;
-  
+
   button {
     margin-left: 10px;
     background-color: #2e7d32;
@@ -132,7 +135,7 @@ const SuccessMessage = styled.div`
     border-radius: 4px;
     padding: 5px 10px;
     cursor: pointer;
-    
+
     &:hover {
       background-color: #1b5e20;
     }
@@ -160,28 +163,32 @@ interface SourcePlaylists {
 const PlaylistConverter: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  
+
   // State for playlists
   const [userPlaylists, setUserPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [playlistsError, setPlaylistsError] = useState<string | null>(null);
   const [hasMorePlaylists, setHasMorePlaylists] = useState(true);
   const [playlistsOffset, setPlaylistsOffset] = useState(0);
-  
+
   // State for selected playlists
   const [sourcePlaylists, setSourcePlaylists] = useState<SourcePlaylists>({
     convert: null,
-    merge: []
+    merge: [],
   });
-  
+
   // State for conversion mode
-  const [conversionMode, setConversionMode] = useState<'convert' | 'merge'>('convert');
-  
+  const [conversionMode, setConversionMode] = useState<"convert" | "merge">(
+    "convert"
+  );
+
   // State for track previews
   const [previewTracks, setPreviewTracks] = useState<PlaylistTrackItem[]>([]);
-  const [filteredPreviewTracks, setFilteredPreviewTracks] = useState<PlaylistTrackItem[]>([]);
+  const [filteredPreviewTracks, setFilteredPreviewTracks] = useState<
+    PlaylistTrackItem[]
+  >([]);
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
-  
+
   // State for filters
   const [filters, setFilters] = useState<FilterOptions>({
     excludeExplicit: false,
@@ -189,101 +196,99 @@ const PlaylistConverter: React.FC = () => {
     excludeGenres: [],
     excludeDecades: [],
   });
-  
+
   // State for new playlist options
-  const [newPlaylistOptions, setNewPlaylistOptions] = useState<PlaylistCreationOptions>({
-    name: '',
-    description: '',
-    isPublic: false
-  });
-  
+  const [newPlaylistOptions, setNewPlaylistOptions] =
+    useState<PlaylistCreationOptions>({
+      name: "",
+      description: "",
+      isPublic: false,
+    });
+
   // State for conversion process
   const [isConverting, setIsConverting] = useState(false);
   const [conversionError, setConversionError] = useState<string | null>(null);
-  const [conversionSuccess, setConversionSuccess] = useState<SpotifyPlaylist | null>(null);
-  
+  const [conversionSuccess, setConversionSuccess] =
+    useState<SpotifyPlaylist | null>(null);
+
   // State for available filter data
-  const [availableArtists, setAvailableArtists] = useState<{ id: string; name: string }[]>([]);
+  const [availableArtists, setAvailableArtists] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [availableDecades, setAvailableDecades] = useState<string[]>([]);
-  
+
   // Load user playlists
   useEffect(() => {
     if (!isAuthenticated && !authLoading) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
-    
+
     const loadPlaylists = async () => {
       try {
         setIsLoading(true);
         setPlaylistsError(null);
-        
+
         const response = await spotifyService.getUserPlaylists(20, 0);
         setUserPlaylists(response.items);
         setHasMorePlaylists(response.next !== null);
         setPlaylistsOffset(20);
       } catch (err) {
-        console.error('Error loading playlists:', err);
-        setPlaylistsError('Failed to load your playlists. Please try again later.');
+        console.error("Error loading playlists:", err);
+        setPlaylistsError(
+          "Failed to load your playlists. Please try again later."
+        );
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     if (isAuthenticated && !authLoading) {
       loadPlaylists();
     }
   }, [isAuthenticated, authLoading, navigate]);
-  
+
   // Load more playlists
-  const handleLoadMorePlaylists = async () => {
-    try {
-      setIsLoading(true);
-      
-      const response = await spotifyService.getUserPlaylists(20, playlistsOffset);
-      setUserPlaylists(prev => [...prev, ...response.items]);
-      setHasMorePlaylists(response.next !== null);
-      setPlaylistsOffset(prev => prev + 20);
-    } catch (err) {
-      console.error('Error loading more playlists:', err);
-      setPlaylistsError('Failed to load more playlists.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Handle playlist selection
-  const handlePlaylistSelect = async (playlist: SpotifyPlaylist) => {
-    if (conversionMode === 'convert') {
+  const handlePlaylistSelect = (playlist: SpotifyPlaylist) => {
+    console.log("Selecting playlist:", playlist.name);
+
+    if (conversionMode === "convert") {
       // Select a single playlist for conversion
       setSourcePlaylists({
         convert: playlist,
-        merge: []
+        merge: [],
       });
-      
+
       // Load tracks for preview and filtering
-      await loadTracksForPreview([playlist]);
+      loadTracksForPreview([playlist]);
     } else {
       // Toggle selection for merging multiple playlists
-      const isSelected = sourcePlaylists.merge.some(p => p.id === playlist.id);
-      
+      const isSelected = sourcePlaylists.merge.some(
+        (p) => p.id === playlist.id
+      );
+      console.log("Is already selected:", isSelected);
+
       let updatedMergePlaylists: SpotifyPlaylist[];
       if (isSelected) {
         // Remove from selection
-        updatedMergePlaylists = sourcePlaylists.merge.filter(p => p.id !== playlist.id);
+        updatedMergePlaylists = sourcePlaylists.merge.filter(
+          (p) => p.id !== playlist.id
+        );
       } else {
         // Add to selection
         updatedMergePlaylists = [...sourcePlaylists.merge, playlist];
       }
-      
+
+      console.log("Updated selection count:", updatedMergePlaylists.length);
+
       setSourcePlaylists({
         convert: null,
-        merge: updatedMergePlaylists
+        merge: updatedMergePlaylists,
       });
-      
+
       // Load tracks for preview and filtering if we have selections
       if (updatedMergePlaylists.length > 0) {
-        await loadTracksForPreview(updatedMergePlaylists);
+        loadTracksForPreview(updatedMergePlaylists);
       } else {
         setPreviewTracks([]);
         setFilteredPreviewTracks([]);
@@ -292,117 +297,167 @@ const PlaylistConverter: React.FC = () => {
       }
     }
   };
-  
+
+  // Load more playlists
+  const handleLoadMorePlaylists = async () => {
+    try {
+      setIsLoading(true);
+
+      const response = await spotifyService.getUserPlaylists(
+        20,
+        playlistsOffset
+      );
+      setUserPlaylists((prev) => [...prev, ...response.items]);
+      setHasMorePlaylists(response.next !== null);
+      setPlaylistsOffset((prev) => prev + 20);
+    } catch (err) {
+      console.error("Error loading more playlists:", err);
+      setPlaylistsError("Failed to load more playlists.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // Handle conversion mode change
-  const handleConversionModeChange = (mode: 'convert' | 'merge') => {
+  const handleConversionModeChange = (mode: "convert" | "merge") => {
     setConversionMode(mode);
-    
+
     // Reset selected playlists
     setSourcePlaylists({
       convert: null,
-      merge: []
+      merge: [],
     });
-    
+
     // Reset preview data
     setPreviewTracks([]);
     setFilteredPreviewTracks([]);
     setAvailableArtists([]);
     setAvailableDecades([]);
   };
-  
+
   // Load tracks for preview and extract filter options
   const loadTracksForPreview = async (playlists: SpotifyPlaylist[]) => {
+    
     try {
       setIsLoadingTracks(true);
-      
+
       // Load tracks from each selected playlist
       let allTracks: PlaylistTrackItem[] = [];
-      
+
       for (const playlist of playlists) {
+        console.log(`Requesting tracks for playlist: ${playlist.name} (ID: ${playlist.id})`);
         const tracksResponse = await spotifyService.getPlaylistTracks(
           playlist.id,
           100, // Limit to 100 for preview
           0,
-          false // Include audio features
+          false // Set to false to avoid audio features permission issues
         );
-        
+
         allTracks = [...allTracks, ...tracksResponse.items];
       }
-      
+
       // Remove duplicates
       const uniqueTracks = removeDuplicateTracks(allTracks);
-      
+
       // Set tracks for preview
       setPreviewTracks(uniqueTracks);
-      
+
       // Create initial filtered preview
       applyFiltersToPreview(uniqueTracks, filters);
-      
+
       // Extract available artists for filtering
       const artists = extractUniqueArtistsFromTracks(uniqueTracks);
       setAvailableArtists(artists);
-      
+
       // Extract available decades for filtering
-      const decades = playlistConverterService.getDecadesFromTracks(uniqueTracks);
+      const decades =
+        playlistConverterService.getDecadesFromTracks(uniqueTracks);
       setAvailableDecades(decades);
-      
+
+      console.log("Preview tracks loaded:", uniqueTracks.length);
+      console.log("Available artists:", artists.length);
+      console.log("Available decades:", decades);
+
+      if (uniqueTracks.length === 0) {
+        console.log('No tracks found, setting test data');
+        setAvailableArtists([
+          { id: 'test1', name: 'Test Artist 1' },
+          { id: 'test2', name: 'Test Artist 2' }
+        ]);
+        setAvailableDecades(['1990s', '2000s', '2010s']);
+      }
     } catch (err) {
-      console.error('Error loading tracks for preview:', err);
-    } finally {
+      console.error("Error loading tracks for preview:", err);
+    } 
+    
+    
+    finally {
       setIsLoadingTracks(false);
     }
+    console.log(
+      "Loading tracks for playlist(s):",
+      playlists.map((p) => p.name).join(", ")
+    );
   };
-  
+
   // Apply filters to preview tracks
-  const applyFiltersToPreview = (tracks: PlaylistTrackItem[], filterOptions: FilterOptions) => {
-    const filtered = playlistConverterService.filterTracks(tracks, filterOptions);
+  const applyFiltersToPreview = (
+    tracks: PlaylistTrackItem[],
+    filterOptions: FilterOptions
+  ) => {
+    const filtered = playlistConverterService.filterTracks(
+      tracks,
+      filterOptions
+    );
     setFilteredPreviewTracks(filtered);
   };
-  
+
   // Update filters and apply to preview
   const handleFilterChange = (newFilters: Partial<FilterOptions>) => {
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
     applyFiltersToPreview(previewTracks, updatedFilters);
   };
-  
+
   // Update new playlist options
-  const handlePlaylistOptionsChange = (options: Partial<PlaylistCreationOptions>) => {
-    setNewPlaylistOptions(prev => ({
+  const handlePlaylistOptionsChange = (
+    options: Partial<PlaylistCreationOptions>
+  ) => {
+    setNewPlaylistOptions((prev) => ({
       ...prev,
-      ...options
+      ...options,
     }));
   };
-  
+
   // Create the new playlist
   const handleCreatePlaylist = async () => {
     try {
       setIsConverting(true);
       setConversionError(null);
       setConversionSuccess(null);
-      
+
       // Validate required fields
       if (!newPlaylistOptions.name.trim()) {
-        setConversionError('Please enter a name for your new playlist.');
+        setConversionError("Please enter a name for your new playlist.");
         setIsConverting(false);
         return;
       }
-      
+
       // Select the right playlist IDs based on mode
-      const playlistIds = conversionMode === 'convert' 
-        ? [sourcePlaylists.convert?.id!] 
-        : sourcePlaylists.merge.map(p => p.id);
-      
+      const playlistIds =
+        conversionMode === "convert"
+          ? [sourcePlaylists.convert?.id!]
+          : sourcePlaylists.merge.map((p) => p.id);
+
       if (playlistIds.length === 0) {
-        setConversionError('Please select at least one playlist.');
+        setConversionError("Please select at least one playlist.");
         setIsConverting(false);
         return;
       }
-      
+
       // Call the right service method based on mode
       let newPlaylist: SpotifyPlaylist;
-      
-      if (conversionMode === 'convert' && playlistIds.length === 1) {
+
+      if (conversionMode === "convert" && playlistIds.length === 1) {
         newPlaylist = await playlistConverterService.convertPlaylist(
           playlistIds[0],
           filters,
@@ -415,108 +470,114 @@ const PlaylistConverter: React.FC = () => {
           newPlaylistOptions
         );
       }
-      
+
       // Set success state
       setConversionSuccess(newPlaylist);
-      
+
       // Reset form
       setNewPlaylistOptions({
-        name: '',
-        description: '',
-        isPublic: false
+        name: "",
+        description: "",
+        isPublic: false,
       });
-      
     } catch (err) {
-      console.error('Error creating playlist:', err);
-      setConversionError('Failed to create the new playlist. Please try again.');
+      console.error("Error creating playlist:", err);
+      setConversionError(
+        "Failed to create the new playlist. Please try again."
+      );
     } finally {
       setIsConverting(false);
     }
   };
-  
+
   // Helper function to remove duplicate tracks
-  const removeDuplicateTracks = (tracks: PlaylistTrackItem[]): PlaylistTrackItem[] => {
+  const removeDuplicateTracks = (
+    tracks: PlaylistTrackItem[]
+  ): PlaylistTrackItem[] => {
     const uniqueTrackMap = new Map<string, PlaylistTrackItem>();
-    
-    tracks.forEach(item => {
+
+    tracks.forEach((item) => {
       if (item.track && item.track.uri) {
         uniqueTrackMap.set(item.track.uri, item);
       }
     });
-    
+
     return Array.from(uniqueTrackMap.values());
   };
-  
+
   // Helper function to extract unique artists from tracks
-  const extractUniqueArtistsFromTracks = (tracks: PlaylistTrackItem[]): { id: string; name: string }[] => {
+  const extractUniqueArtistsFromTracks = (
+    tracks: PlaylistTrackItem[]
+  ): { id: string; name: string }[] => {
     const artistMap = new Map<string, { id: string; name: string }>();
-    
-    tracks.forEach(item => {
+
+    tracks.forEach((item) => {
       if (item.track && item.track.artists) {
-        item.track.artists.forEach(artist => {
+        item.track.artists.forEach((artist) => {
           if (!artistMap.has(artist.id)) {
             artistMap.set(artist.id, { id: artist.id, name: artist.name });
           }
         });
       }
     });
-    
-    return Array.from(artistMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+    return Array.from(artistMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
   };
-  
+
   // Navigate back to dashboard
   const handleBack = () => {
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
-  
+
   // Navigate to the created playlist
   const viewCreatedPlaylist = () => {
     if (conversionSuccess) {
       navigate(`/playlist/${conversionSuccess.id}`);
     }
   };
-  
+
   // Check if form is valid for submission
   const isFormValid = () => {
     if (!newPlaylistOptions.name.trim()) {
       return false;
     }
-    
-    if (conversionMode === 'convert' && !sourcePlaylists.convert) {
+
+    if (conversionMode === "convert" && !sourcePlaylists.convert) {
       return false;
     }
-    
-    if (conversionMode === 'merge' && sourcePlaylists.merge.length === 0) {
+
+    if (conversionMode === "merge" && sourcePlaylists.merge.length === 0) {
       return false;
     }
-    
+
     return true;
   };
-  
+
   // Render the component
   return (
     <ConverterContainer>
       <Header>
-        <BackButton onClick={handleBack}>
-          ← Back to Dashboard
-        </BackButton>
+        <BackButton onClick={handleBack}>← Back to Dashboard</BackButton>
         <Title>Playlist Converter</Title>
         <Subtitle>
-          Create a new playlist by converting or merging existing playlists with custom filters
+          Create a new playlist by converting or merging existing playlists with
+          custom filters
         </Subtitle>
       </Header>
-      
+
       {playlistsError && <ErrorMessage>{playlistsError}</ErrorMessage>}
-      
+
       {conversionError && <ErrorMessage>{conversionError}</ErrorMessage>}
-      
+
       {conversionSuccess && (
         <SuccessMessage>
-          Successfully created playlist "{conversionSuccess.name}"!{' '}
+          Successfully created playlist "{conversionSuccess.name}"!{" "}
           <button onClick={viewCreatedPlaylist}>View Playlist</button>
         </SuccessMessage>
       )}
-      
+
       <StepsContainer>
         {/* Step 1: Choose conversion mode */}
         <Step>
@@ -524,64 +585,67 @@ const PlaylistConverter: React.FC = () => {
             <StepTitle>Choose Mode</StepTitle>
             <StepNumber>1</StepNumber>
           </StepHeader>
-          
+
           <ModeSelector>
             <label>
               <input
                 type="radio"
                 name="conversionMode"
                 value="convert"
-                checked={conversionMode === 'convert'}
-                onChange={() => handleConversionModeChange('convert')}
+                checked={conversionMode === "convert"}
+                onChange={() => handleConversionModeChange("convert")}
               />
               Convert a single playlist with filters
             </label>
-            
+
             <label>
               <input
                 type="radio"
                 name="conversionMode"
                 value="merge"
-                checked={conversionMode === 'merge'}
-                onChange={() => handleConversionModeChange('merge')}
+                checked={conversionMode === "merge"}
+                onChange={() => handleConversionModeChange("merge")}
               />
               Merge multiple playlists with filters
             </label>
           </ModeSelector>
         </Step>
-        
+
         {/* Step 2: Select playlist(s) */}
         <Step>
           <StepHeader>
             <StepTitle>
-              {conversionMode === 'convert'
-                ? 'Select Playlist to Convert'
-                : 'Select Playlists to Merge'}
+              {conversionMode === "convert"
+                ? "Select Playlist to Convert"
+                : "Select Playlists to Merge"}
             </StepTitle>
             <StepNumber>2</StepNumber>
           </StepHeader>
-          
+
           <PlaylistSelectionStep
             playlists={userPlaylists}
-            selectedPlaylists={conversionMode === 'convert' 
-              ? sourcePlaylists.convert ? [sourcePlaylists.convert] : []
-              : sourcePlaylists.merge
+            selectedPlaylists={
+              conversionMode === "convert"
+                ? sourcePlaylists.convert
+                  ? [sourcePlaylists.convert]
+                  : []
+                : sourcePlaylists.merge
             }
-            isMultiSelect={conversionMode === 'merge'}
+            isMultiSelect={conversionMode === "merge"}
             isLoading={isLoading}
             hasMore={hasMorePlaylists}
             onPlaylistSelect={handlePlaylistSelect}
             onLoadMore={handleLoadMorePlaylists}
           />
         </Step>
-        
+
         {/* Step 3: Filter options */}
         <Step>
           <StepHeader>
             <StepTitle>Filter Options</StepTitle>
             <StepNumber>3</StepNumber>
           </StepHeader>
-          
+
           {isLoadingTracks ? (
             <LoadingMessage>Loading track data for filtering...</LoadingMessage>
           ) : previewTracks.length === 0 ? (
@@ -589,45 +653,53 @@ const PlaylistConverter: React.FC = () => {
           ) : (
             <>
               <FilterSummary>
-                {filteredPreviewTracks.length} of {previewTracks.length} tracks will be included in your new playlist.
+                {filteredPreviewTracks.length} of {previewTracks.length} tracks
+                will be included in your new playlist.
               </FilterSummary>
-              
-              <TrackFilters 
+
+              <TrackFilters
                 filters={filters}
                 onFilterChange={handleFilterChange}
               />
-              
+
               {/* Artists Filter */}
               {availableArtists.length > 0 && (
                 <FilterCheckboxGroup
                   title="Exclude Artists"
                   items={availableArtists}
                   selectedIds={filters.excludeArtists || []}
-                  onChange={(selectedIds) => handleFilterChange({ excludeArtists: selectedIds })}
+                  onChange={(selectedIds) =>
+                    handleFilterChange({ excludeArtists: selectedIds })
+                  }
                   maxItemsToShow={20}
                 />
               )}
-              
+
               {/* Decades Filter */}
               {availableDecades.length > 0 && (
                 <FilterCheckboxGroup
                   title="Exclude Decades"
-                  items={availableDecades.map(decade => ({ id: decade, name: decade }))}
+                  items={availableDecades.map((decade) => ({
+                    id: decade,
+                    name: decade,
+                  }))}
                   selectedIds={filters.excludeDecades || []}
-                  onChange={(selectedIds) => handleFilterChange({ excludeDecades: selectedIds })}
+                  onChange={(selectedIds) =>
+                    handleFilterChange({ excludeDecades: selectedIds })
+                  }
                 />
               )}
             </>
           )}
         </Step>
-        
+
         {/* Step 4: New Playlist Details */}
         <Step>
           <StepHeader>
             <StepTitle>New Playlist Details</StepTitle>
             <StepNumber>4</StepNumber>
           </StepHeader>
-          
+
           <PlaylistCreationForm
             isConverting={isConverting}
             conversionMode={conversionMode}
